@@ -1,0 +1,19 @@
+{
+  "name": "crawler-prerender",
+  "version": "0.1.0",
+  "description": "Prererendering for Single Page Applications to improve SEO",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "spa",
+    "seo",
+    "prerender"
+  ],
+  "author": "Xavier Mukodi",
+  "license": "ISC",
+  "dependencies": {
+    "valid-url": "^1.0.9"
+  }
+}
