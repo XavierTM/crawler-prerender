@@ -8,9 +8,10 @@ const axios_raw = require('axios');
 const { JSDOM } = require('jsdom');
 
 // constants
-const CRAWLER_PRERENDER_BASE_PATH = `${__dirname}/crawler-prerender`;
+const CRAWLER_PRERENDER_BASE_PATH = `./crawler-prerender`;
 const APPROXIMATE_RETRY_PERIOD = 2 * 60 * 1000;
 const DEFAULT_RENDERING_TIMEOUT = 30000;
+const PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
 
 // utility functions
 
@@ -48,6 +49,7 @@ const crawlerPrerender = async function(options = {}) {
 			throw error;
 		}
 
+		// adding protocol if it wasn't present
 		if (!/:\/\//.test(siteUrl))
 			siteUrl = 'http://' + siteUrl;
 
@@ -83,6 +85,9 @@ const crawlerPrerender = async function(options = {}) {
 			await fs.mkdir(CRAWLER_PRERENDER_BASE_PATH);
 
 	}
+
+	// what to do on timeout
+	settings.prerenderOnTimeout = (options.prerenderOnTimeout === true);
 
 
 	// return middlware
@@ -121,140 +126,153 @@ const crawlerPrerender = async function(options = {}) {
 
 }
 
-crawlerPrerender.prerender = async function(path) {
+crawlerPrerender.prerender = function(path) {
 
-	if (typeof path !== 'string' || path.length === 0)
-		throw new Error('invalid path');
+	return new Promise(async (resolve, reject) => {
 
-	// adding a leading slash if it doesn't exist
-	if (path.charAt(0) !== '/')
-		path = `/${path}`;
+		if (typeof path !== 'string' || path.length === 0)
+			reject(new Error('invalid path'));
 
-	// removing the trailing slash if it exists, and if the string length <> 1
-	const pathLen = path.length;
+		// adding a leading slash if it doesn't exist
+		if (path.charAt(0) !== '/')
+			path = `/${path}`;
 
-	if (pathLen > 1) {
-		if (path.charAt(pathLen - 1) ===  '/')
-			path = path.substring(0, pathLen - 1);
-	}
+		// removing the trailing slash if it exists, and if the string length <> 1
+		const pathLen = path.length;
 
-	try {
-
-		const url = settings.siteUrl + path;
-
-		let html, axiosResults, document, scripts;
-
-		// get page html
-		axiosResults = await axios.get(url);
-		html = axiosResults.data;
-
-		// creating a dormant DOM
-		const dormantDOM = new JSDOM(html);
-	
-		// loading external scripts for execution
-		document = dormantDOM.window.document;
-		scripts = document.querySelectorAll('script');
-
-		for (let i = 0; i < scripts.length; i++) {
-
-			const script = scripts[i];
-			const src = script.src;
-
-
-			if (src && src !== '') { // checking if the script is external
-
-				// removing the src and getting it's contents instead
-				script.setAttribute('data-crawler-prerender-script-src', src); // preserving it's src attribute value
-				script.removeAttribute('src');
-				const url_type = urlType(src);
-
-				const base_url = baseUrl(url);
-
-				let scriptURL;
-
-				switch (url_type) {
-
-					case 'full':
-						scriptURL = src;
-						break;
-
-					case 'absolute':
-						scriptURL = absoluteToFullUrl(base_url, src);
-						break;
-
-					case 'relative':
-						scriptURL = relativeToFullUrl(url, src);
-
-					default:
-						throw new Error('Invalid URL');
-
-				}
-
-				let response = await axios.get(scriptURL);
-				const scriptContents = response.data;
-
-				script.innerHTML = scriptContents;
-
-			}
+		if (pathLen > 1) {
+			if (path.charAt(pathLen - 1) ===  '/')
+				path = path.substring(0, pathLen - 1);
 		}
 
-		// create a DOM that will execute the scripts that will create contents
-		html = dormantDOM.serialize();
+		try {
 
-		const options = { 
-			runScripts: "dangerously",
-			resources: "usable",
-			url // very important
-		};
+			const url = settings.siteUrl + path;
 
-		const DOM = new JSDOM(html, options);
-		document = DOM.window.document;
+			let html, axiosResults, document, scripts;
 
-		const encodedFileName = encodeURIComponent(path);
-		const filePath = `${settings.basePath}/${encodedFileName}`;
+			// get page html
+			axiosResults = await axios.get(url);
+			html = axiosResults.data;
 
-		let timer;
-
-		document.addEventListener('PAGE_COMPLETELY_RENDERED', async function() {
-
-			clearTimeout(timer);
-
-			// restoring src attributes for scripts
+			// creating a dormant DOM
+			const dormantDOM = new JSDOM(html);
+		
+			// loading external scripts for execution
+			document = dormantDOM.window.document;
 			scripts = document.querySelectorAll('script');
 
 			for (let i = 0; i < scripts.length; i++) {
 
 				const script = scripts[i];
+				const src = script.src;
 
-				const dataCrawlerPrerenderScriptSrc = script.getAttribute('data-crawler-prerender-script-src');
 
-				if (!dataCrawlerPrerenderScriptSrc)
-					continue;
+				if (src && src !== '') { // checking if the script is external
 
-				script.removeAttribute('data-crawler-prerender-script-src');
-				script.setAttribute('src', dataCrawlerPrerenderScriptSrc);
-				script.innerHTML = '';
+					// removing the src and getting it's contents instead
+					script.setAttribute('data-crawler-prerender-script-src', src); // preserving it's src attribute value
+					script.removeAttribute('src');
+					const url_type = urlType(src);
 
+					const base_url = baseUrl(url);
+
+					let scriptURL;
+
+					switch (url_type) {
+
+						case 'full':
+							scriptURL = src;
+							break;
+
+						case 'absolute':
+							scriptURL = absoluteToFullUrl(base_url, src);
+							break;
+
+						case 'relative':
+							scriptURL = relativeToFullUrl(url, src);
+
+						default:
+							reject(new Error('Invalid URL'));
+
+					}
+
+					let response = await axios.get(scriptURL);
+					const scriptContents = response.data;
+
+					script.innerHTML = scriptContents;
+
+				}
 			}
 
-			await saveRenderedHTML(DOM, filePath);
+			// create a DOM that will execute the scripts that will create contents
+			html = dormantDOM.serialize();
 
-			console.log('Prerendered');
+			const options = { 
+				runScripts: "dangerously",
+				resources: "usable",
+				url // very important
+			};
 
-		});
+			const DOM = new JSDOM(html, options);
+			document = DOM.window.document;
 
-		// timeout if the page took so much time to render
-		timer = setTimeout(() => {
-			const event = new DOM.window.Event('PAGE_COMPLETELY_RENDERED');
-			document.dispatchEvent(event);
-		}, DEFAULT_RENDERING_TIMEOUT);
+			const encodedFileName = encodeURIComponent(path);
+			const filePath = `${settings.basePath}/${encodedFileName}`;
 
-	} catch(err) {
-		// catching an error and recalling itself again
-		console.log(err);
-		//process.exit(0);
-		//crawlerPrerender.prerender(path);
-	}
+			let timer;
+
+			const pageCompletelyRendered = async function() {
+
+				clearTimeout(timer);
+
+				// restoring src attributes for scripts
+				scripts = document.querySelectorAll('script');
+
+				for (let i = 0; i < scripts.length; i++) {
+
+					const script = scripts[i];
+
+					const dataCrawlerPrerenderScriptSrc = script.getAttribute('data-crawler-prerender-script-src');
+
+					if (!dataCrawlerPrerenderScriptSrc)
+						continue;
+
+					script.removeAttribute('data-crawler-prerender-script-src');
+					script.setAttribute('src', dataCrawlerPrerenderScriptSrc);
+					script.innerHTML = '';
+
+				}
+
+				try {
+					await saveRenderedHTML(DOM, filePath);
+					resolve();
+				} catch (err) {
+					reject(err);
+				}
+
+			};
+
+			document.addEventListener(PAGE_COMPLETELY_RENDERED_EVENT_NAME, pageCompletelyRendered);
+
+			// timeout if the page took so much time to render
+			timer = setTimeout(() => {
+
+				if (settings.prerenderOnTimeout) {
+					const event = new DOM.window.Event(PAGE_COMPLETELY_RENDERED_EVENT_NAME);
+					document.dispatchEvent(event);
+				} else {
+					document.removeListener(PAGE_COMPLETELY_RENDERED_EVENT_NAME, pageCompletelyRendered);
+					reject(new Error('Render timeout'));
+				}
+
+			}, DEFAULT_RENDERING_TIMEOUT);
+
+		} catch(err) {
+			reject(err);
+		}
+	});
+
 } 
 
 
