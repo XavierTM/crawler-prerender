@@ -1,7 +1,7 @@
 
 'use strict'
 
-class CrawlerPrerender {
+class CrawlerPrerenderClass {
 
 	sendRenderingCompleteEvent() {
 		const PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
@@ -9,7 +9,7 @@ class CrawlerPrerender {
 		document.dispatchEvent(event);
 	}
 
-	initMetaData(data) {
+	initMetaData(data = {}) {
 
 		const { description, title, keywords } = data;
 
@@ -49,4 +49,5 @@ class CrawlerPrerender {
 	}
 }
 
+const CrawlerPrerender = new CrawlerPrerenderClass();
 window.CrawlerPrerender = CrawlerPrerender;
