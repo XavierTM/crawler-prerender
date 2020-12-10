@@ -30,6 +30,8 @@ class CrawlerPrerenderClass {
 			metaDescriptionTag.setAttribute('name', 'description')
 			metaDescriptionTag.setAttribute('content', description);
 
+			document.head.append(metaDescriptionTag);
+
 		}
 
 		if (keywords) {
@@ -44,6 +46,8 @@ class CrawlerPrerenderClass {
 			const metaKeywordsTag = document.createElement('meta');
 			metaKeywordsTag.setAttribute('name', 'keywords');
 			metaKeywordsTag.setAttribute('content', description);
+
+			document.head.append(metaKeywordsTag);
 
 		}
 	}
