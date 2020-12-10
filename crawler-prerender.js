@@ -36,7 +36,7 @@ class CrawlerPrerenderClass {
 
 		if (keywords) {
 			// removing existing ones
-			const metaKeywordsTags = document.querySelectorAll('meta[name=description]');
+			const metaKeywordsTags = document.querySelectorAll('meta[name=keywords]');
 			if (metaKeywordsTags.length) {
 				for(let i = 0; i < metaKeywordsTags.length; i++)
 					metaKeywordsTags[i].remove();
