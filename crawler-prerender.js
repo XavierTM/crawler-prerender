@@ -1,16 +1,15 @@
 
 'use strict'
 
-const PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
+class CrawlerPrerender {
 
-const CrawlerPrerender = {
-	
-	sendRenderingCompleteEvent: () => {
+	sendRenderingCompleteEvent() {
+		const PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
 		const event = new Event(PAGE_COMPLETELY_RENDERED_EVENT_NAME);
 		document.dispatchEvent(event);
 	}
 
-	initMetaData: (data = {}) => {
+	initMetaData(data) {
 
 		const { description, title, keywords }
 
@@ -49,3 +48,5 @@ const CrawlerPrerender = {
 		}
 	}
 }
+
+window.CrawlerPrerender = CrawlerPrerender;
