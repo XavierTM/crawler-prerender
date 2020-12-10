@@ -11,7 +11,7 @@ class CrawlerPrerender {
 
 	initMetaData(data) {
 
-		const { description, title, keywords }
+		const { description, title, keywords } = data;
 
 		if (title)
 			document.title = title;
