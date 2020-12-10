@@ -45,7 +45,7 @@ class CrawlerPrerenderClass {
 			// creating the meta tag
 			const metaKeywordsTag = document.createElement('meta');
 			metaKeywordsTag.setAttribute('name', 'keywords');
-			metaKeywordsTag.setAttribute('content', description);
+			metaKeywordsTag.setAttribute('content', keywords);
 
 			document.head.append(metaKeywordsTag);
 
