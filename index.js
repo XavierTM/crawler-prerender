@@ -60,8 +60,6 @@ const crawlerPrerender = async function(options = {}) {
 		throw error;
 	}
 
-	// render timeout
-
 
 	// base path for storing prerendered files
 	let basePathExists;
