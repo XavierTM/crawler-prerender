@@ -31,7 +31,7 @@ The prerender will wait for the javascript to finish rendering the page contents
 ## Installation
 
 ```bash
-	$ npm install crawler-prerender
+$ npm install crawler-prerender
 ```
 
 ## Backend basic setup
@@ -44,17 +44,17 @@ The prerender will wait for the javascript to finish rendering the page contents
 
 	// getting the middleware
 	const crawlerPrerenderOptions = { siteUrl: 'http://example.com/8080' };
-	const crawlerPrerenderMiddleware = await crawlerPrerender(crawlerPrerenderOptions);
+	const { middleware } = await crawlerPrerender(crawlerPrerenderOptions);
 
 	const app = express();
 
-	// define your api routes here
+	// define your api routes and middlewares here
 
 
 	// mount static middleware before the crawler-prerendere middleware
 	app.use(express.static('/path/to/static/root/directory', { index: false })); // put index: false to avoid issues prerendering the homepage
 
-	app.get('*', crawlerPrerenderMiddleware);
+	app.get('*', middleware);
 
 	// serving your SPA
 	app.get('*', function(req, res) {
@@ -65,7 +65,14 @@ The prerender will wait for the javascript to finish rendering the page contents
 ```
 ### Prerendering a path
 ```javascript
-	const prerender = 
+
+const crawlerPrerender = require('crawler-prerender');
+const options = { siteUrl: 'www.example.com' };
+const { prerender } = await crawlerPrerender(options);
+
+const path = '/products/1234'; // absolute path
+await prerender(path);
+
 ```
 
 ### Options
@@ -74,25 +81,23 @@ The prerender will wait for the javascript to finish rendering the page contents
 	<tr>
 		<td><b>siteUrl</b></td>
 		<td>
-		 	Abc
+		 	The base URL of your web app<br>
+		 	Ex: www.example.com
+		 	<b>Required</b>
 		</td>
 	</tr>
 	<tr>
 		<td><b>basePath</b></td>
 		<td>
 		 	The directory to save prerendered html
-		</td>
-	</tr>
-	<tr>
-		<td><b>siteUrl</b></td>
-		<td>
-		 	Abc
+		 	<b>Default</b>: <code>`${process.cwd()}/crawler-prerender`</code>
 		</td>
 	</tr>
 	<tr>
 		<td><b>prerenderOnTimeout</b></td>
 		<td>
-		 	Abc
+		 	The prerender will wait for a period of 30s for the page to finish rendering. If it is not rendered by then, it will either prerender without waiting, or raise an error.<br>
+		 	<b>Default</b>: <code>false</code>
 		</td>
 	</tr>
 </table>
@@ -106,17 +111,17 @@ Include the above script in your application
 ### Setting title, meta keywords, and meta description
 
 ```javascript
-	
-	const title = 'My Page Title | My Site';
-	const description = "My meta page description";
-	const keywords = "seo, page, keywords";
 
-	const meta_data = { title, keywords, description };
+const title = 'My Page Title | My Site';
+const description = "My meta page description";
+const keywords = "seo, page, keywords";
 
-	CrawlerPrerender.initMetaData(meta_data);
+const meta_data = { title, keywords, description };
+
+CrawlerPrerender.initMetaData(meta_data);
 ```
 
 ### Notifying the prerender module when you page is rendered
 ```javascript
-	CrawlerPrerender.sendRenderingCompleteEvent();
+CrawlerPrerender.sendRenderingCompleteEvent();
 ```

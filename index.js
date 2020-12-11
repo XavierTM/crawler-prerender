@@ -91,8 +91,7 @@ const crawlerPrerender = async function(options = {}) {
 
 	crawlerPrerender.prerender = prerender;
 
-	// return middlware
-	return async function(req, res, next) {
+	const middlware = async function(req, res, next) {
 
 		const isBot = checkIfBot(req);
 
@@ -124,6 +123,8 @@ const crawlerPrerender = async function(options = {}) {
 			next();
 		}
 	}
+
+	return { prerender, middlware };
 
 }
 
