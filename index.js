@@ -3,12 +3,13 @@
 
 // dependencies
 const fs = require('fs').promises;
+const path = require('path');
 const validURL = require('valid-url');
 const axios_raw = require('axios');
 const { JSDOM } = require('jsdom');
 
 // constants
-const CRAWLER_PRERENDER_BASE_PATH = `./crawler-prerender`;
+const CRAWLER_PRERENDER_BASE_PATH = `${process.cwd()}/crawler-prerender`;
 const APPROXIMATE_RETRY_PERIOD = 2 * 60 * 1000;
 const DEFAULT_RENDERING_TIMEOUT = 60000;
 const PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
@@ -67,7 +68,7 @@ const crawlerPrerender = async function(options = {}) {
 
 	if (options.basePath) {
 
-		settings.basePath = options.basePath;
+		settings.basePath = path.resolve(options.basePath);
 		basePathExists = await pathExists(settings.basePath);
 
 		if (basePathExists === false) {
@@ -88,6 +89,7 @@ const crawlerPrerender = async function(options = {}) {
 	// what to do on timeout
 	settings.prerenderOnTimeout = (options.prerenderOnTimeout === true);
 
+	crawlerPrerender.prerender = prerender;
 
 	// return middlware
 	return async function(req, res, next) {
@@ -125,7 +127,7 @@ const crawlerPrerender = async function(options = {}) {
 
 }
 
-crawlerPrerender.prerender = function(path) {
+const prerender = function(path) {
 
 	return new Promise(async (resolve, reject) => {
 
@@ -209,7 +211,6 @@ crawlerPrerender.prerender = function(path) {
 
 			const options = { 
 				runScripts: "dangerously",
-				resources: "usable",
 				url // very important
 			};
 
@@ -269,7 +270,7 @@ crawlerPrerender.prerender = function(path) {
 
 			}, DEFAULT_RENDERING_TIMEOUT);
 
-	      const event = new DOM.window.Event(JSDOM_DOCUMENT_READY_EVENT_NAME);
+	      const event = new Event(JSDOM_DOCUMENT_READY_EVENT_NAME);
 	      document.dispatchEvent(event)
 
 		} catch(err) {
