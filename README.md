@@ -88,8 +88,10 @@ crawlerPrerender.prerender('/some-path');
 	<tr>
 		<td><b>siteUrl</b></td>
 		<td>
-		 	The base URL of your web app<br>
+		 	The base URL of your web app
+		 	<br><br>
 		 	Ex: www.example.com
+		 	<br>
 		 	<b>Required</b>
 		</td>
 	</tr>
@@ -97,13 +99,15 @@ crawlerPrerender.prerender('/some-path');
 		<td><b>basePath</b></td>
 		<td>
 		 	The directory to save prerendered html
+		 	<br>
 		 	<b>Default</b>: <code>`${process.cwd()}/crawler-prerender`</code>
 		</td>
 	</tr>
 	<tr>
 		<td><b>prerenderOnTimeout</b></td>
 		<td>
-		 	The prerender will wait for a period of 30s for the page to finish rendering. If it is not rendered by then, it will either prerender without waiting, or raise an error.<br>
+		 	The prerender will wait for a period of 30s for the page to finish rendering. If it is not rendered by then, it will either prerender without waiting, or raise an error.
+		 	<br><br>
 		 	<b>Default</b>: <code>false</code>
 		</td>
 	</tr>
