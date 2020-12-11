@@ -4,8 +4,16 @@
 class CrawlerPrerenderClass {
 
 	sendRenderingCompleteEvent() {
-		const PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
-		const event = new Event(PAGE_COMPLETELY_RENDERED_EVENT_NAME);
+
+		this.document_rendered = true;
+
+		if (this.jsdom_ready)
+			this.dispatchEvent();
+
+	}
+
+	dispatchEvent() {
+		const event = new Event(this.PAGE_COMPLETELY_RENDERED_EVENT_NAME);
 		document.dispatchEvent(event);
 	}
 
@@ -50,6 +58,24 @@ class CrawlerPrerenderClass {
 			document.head.append(metaKeywordsTag);
 
 		}
+	}
+
+	constructor() {
+
+		this.JSDOM_DOCUMENT_READY_EVENT_NAME = 'bbdfdd86-d1ed-4f0f-ae0f-b7e49674426d';
+		this.PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
+		this.jsdom_ready = false;
+		this.document_rendered = false;
+
+		const _this = this;
+
+		document.addEventListener(this.JSDOM_DOCUMENT_READY_EVENT_NAME, function() {
+			_this.jsdom_ready = true;
+
+			if (_this.document_rendered)
+				_this.dispatchEvent();
+			
+		});
 	}
 }
 

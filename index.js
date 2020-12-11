@@ -10,8 +10,9 @@ const { JSDOM } = require('jsdom');
 // constants
 const CRAWLER_PRERENDER_BASE_PATH = `./crawler-prerender`;
 const APPROXIMATE_RETRY_PERIOD = 2 * 60 * 1000;
-const DEFAULT_RENDERING_TIMEOUT = 30000;
+const DEFAULT_RENDERING_TIMEOUT = 60000;
 const PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
+const JSDOM_DOCUMENT_READY_EVENT_NAME = 'bbdfdd86-d1ed-4f0f-ae0f-b7e49674426d';
 
 // utility functions
 
@@ -253,18 +254,23 @@ crawlerPrerender.prerender = function(path) {
 
 			document.addEventListener(PAGE_COMPLETELY_RENDERED_EVENT_NAME, pageCompletelyRendered);
 
+			const { Event } = DOM.window;
+
 			// timeout if the page took so much time to render
 			timer = setTimeout(() => {
 
 				if (settings.prerenderOnTimeout) {
-					const event = new DOM.window.Event(PAGE_COMPLETELY_RENDERED_EVENT_NAME);
+					const event = new Event(PAGE_COMPLETELY_RENDERED_EVENT_NAME);
 					document.dispatchEvent(event);
 				} else {
-					document.removeListener(PAGE_COMPLETELY_RENDERED_EVENT_NAME, pageCompletelyRendered);
+					document.removeEventListener(PAGE_COMPLETELY_RENDERED_EVENT_NAME, pageCompletelyRendered);
 					reject(new Error('Render timeout'));
 				}
 
 			}, DEFAULT_RENDERING_TIMEOUT);
+
+	      const event = new DOM.window.Event(JSDOM_DOCUMENT_READY_EVENT_NAME);
+	      document.dispatchEvent(event)
 
 		} catch(err) {
 			reject(err);
