@@ -10,7 +10,7 @@ This module make easier to manage SEO for SPAs(single page applications). It sol
 In general, the package crawls your web pages, get the Javascript to generate content, runs it, then saves the HTML content to show search engine crawlers. When a search engine crawls your website, it the serves it the prerendered HTML. Normal clients will still receives normal SPA content.
 
 ### Backend
-The npm package that has two components
+The npm package has two components
 
 #### Prerendering function
 This function generates HTML from your page Javascript and saves it to the file system. All you need to do is pass a path to the resource, and it will generate the HTML.
@@ -74,6 +74,13 @@ const path = '/products/1234'; // absolute path
 await prerender(path);
 
 ```
+
+You can also access the ```prerender``` function as follows
+```javascript
+crawlerPrerender.prerender('/some-path');
+```
+
+**NB**: You can only access prerender after passing options
 
 ### Options
 
