@@ -1,22 +1,23 @@
 
 # crawler-prerender
 This module make easier to manage SEO for SPAs(single page applications). It solves two problems associated with SPA SEO management.  
-1. Some crawlers can't run Javascript
+1. Some crawlers can't run Javascript, so they will index an empty page.
 2. Since an SPA usually has one template HTML page, you cannot set ```<meta>``` tags, and page title in advance for different routes.
 
-**NB**: It only works with Express.js
 
 ## How it works
-In general, the package crawls your web pages, get the Javascript to generate content, runs it, then saves the HTML content to show search engine crawlers. When a search engine crawls your website, it the serves it the prerendered HTML. Normal clients will still receives normal SPA content.
+In general, the package crawls your web pages, get the Javascript to generate content, runs it, then saves the HTML content to show to search engine crawlers. When a search engine crawls your website, it the serves it the prerendered HTML. Normal clients will still receives normal SPA content.
 
 ### Backend
-The npm package has three components
+The npm package has two components
 
 #### Prerendering function
 This function generates HTML from your page Javascript and saves it to the file system. All you need to do is pass a path to the resource, and it will generate the HTML.
 
 #### Middleware
 This middleware will detect traffic from search engine crawlers and it serves them prerendered HTML rather than SPA javascript page. If the path is not yet prerendered, it will return HTTP 503 error code, then prerenders the path.
+
+**NB**: The middleware only works with Express.js
 
 
 ### Front end
@@ -51,7 +52,6 @@ $ npm install crawler-prerender
 
 	// define your api routes and middlewares here
 
-
 	// mount static middleware before the crawler-prerendere middleware
 	app.use(express.static('/path/to/static/root/directory', { index: false })); // put index: false to avoid issues prerendering the homepage
 
@@ -82,7 +82,7 @@ You can also access the ```prerender``` function as follows
 crawlerPrerender.prerender('/some-path');
 ```
 
-**NB**: You can only access prerender after passing options
+**NB**: You can only access prerender that way after passing options
 
 #### Prerender only if not prerendered
 You can prevent the ```prerender``` function from overwriting the path's prerendered contents. This is useful when you want to make sure that all the paths are prerendered every time you startup the application, but you do not want to waste resources when the paths are already prerendered.
@@ -124,10 +124,12 @@ prerender(path, { overwrite: false });
 		<td><b>prerenderOnError</b></td>
 		<td>
 			A function to be called when an error occurs while prerendering.<br>
+			<br>
 			<code>function(path, errors) {
-				<br>
+				&#13;
 				&nbsp; &nbsp;// code
-				<br>}</code><br>
+				&#13;}</code><br>
+				<br>
 			<b>path</b> — the path that was being prerendered.<br>
 			<b>errors</b> — an array of all the errors that occured during retries
 			<br>
@@ -141,7 +143,7 @@ prerender(path, { overwrite: false });
 ## Front End Setup
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/gh/xaviertm/crawler-prerender@0.1.9/crawler-prerender.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/xaviertm/crawler-prerender@v0.1.0/crawler-prerender.min.js"></script>
 ```
 
 Include the above script in your application

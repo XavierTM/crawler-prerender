@@ -148,7 +148,7 @@ const crawlerPrerender = async function(options = {}) {
 				}
 
 				if (!prerendered) {
-					settings.prerenderOnError(req.originalUrl, errors);
+					await settings.prerenderOnError(req.originalUrl, errors);
 				}
 
 			} else {
