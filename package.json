@@ -17,6 +17,16 @@
     "axios": "^0.21.0",
     "isbot": "^3.0.19",
     "jsdom": "^16.4.0",
+    "serialize-error": "^7.0.1",
     "valid-url": "^1.0.9"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XavierTM/crawler-prerender.git"
+  },
+  "bugs": {
+    "url": "https://github.com/XavierTM/crawler-prerender/issues"
+  },
+  "homepage": "https://github.com/XavierTM/crawler-prerender#readme"
 }

@@ -6,7 +6,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const validURL = require('valid-url');
 const axios_raw = require('axios');
-const { JSDOM } = require('jsdom');
+const { serializeError } = require('serialize-error');
+const { JSDOM, VirtualConsole } = require('jsdom');
 
 // constants
 const CRAWLER_PRERENDER_BASE_PATH = `${process.cwd()}/crawler-prerender`;
@@ -14,6 +15,7 @@ const APPROXIMATE_RETRY_PERIOD = 2 * 60 * 1000;
 const DEFAULT_RENDERING_TIMEOUT = 60000;
 const PAGE_COMPLETELY_RENDERED_EVENT_NAME = '597cd556-2463-4604-9af7-cfc9e13667cf';
 const JSDOM_DOCUMENT_READY_EVENT_NAME = 'bbdfdd86-d1ed-4f0f-ae0f-b7e49674426d';
+const PRERENDER_MAXIMUM_RETRIES = 5;
 
 // utility functions
 
@@ -34,6 +36,17 @@ const axios = axios_raw.create({
 		'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/534.30 (KHTML, like Gecko) Ubuntu/11.04 Chromium/12.0.742.112 Chrome/12.0.742.112 Safari/534.30'
 	}
 });
+
+function prerenderOnErrorDefault(path, errors) {
+
+	console.log(`Errors encounterd while prerendering path '${path}'`);
+
+	errors.forEach(function(error, index) {
+		const serialized = serializeError(error);
+		console.log(`${index + 1}.`, serialized);
+	});
+
+}
 
 const crawlerPrerender = async function(options = {}) {
 
@@ -61,6 +74,14 @@ const crawlerPrerender = async function(options = {}) {
 		error = new Error("'siteUrl' option is required");
 		throw error;
 	}
+
+
+	// what to do when prerender fails on a path multiple times
+	const { prerenderOnError } = options;
+	if (typeof prerenderOnError === 'function')
+		settings.prerenderOnError = prerenderOnError;
+	else
+		settings.prerenderOnError = prerenderOnErrorDefault;
 
 
 	// base path for storing prerendered files
@@ -91,7 +112,7 @@ const crawlerPrerender = async function(options = {}) {
 
 	crawlerPrerender.prerender = prerender;
 
-	const middlware = async function(req, res, next) {
+	const middleware = async function(req, res, next) {
 
 		const isBot = checkIfBot(req);
 
@@ -113,7 +134,22 @@ const crawlerPrerender = async function(options = {}) {
 				res.setHeader('Retry-After', retryAfter);
 				res.sendStatus(503);
 
-				await crawlerPrerender.prerender(req.originalUrl);
+				let prerendered = false;
+				const errors = [];
+
+				for (let i = 0; i < PRERENDER_MAXIMUM_RETRIES; i++) {
+					try {
+						await prerender(req.originalUrl, true);
+						prerender = true;
+						break;
+					} catch (err) {
+						errors.push(err);
+					}
+				}
+
+				if (!prerendered) {
+					settings.prerenderOnError(req.originalUrl, errors);
+				}
 
 			} else {
 				res.sendFile(filePath);
@@ -124,11 +160,13 @@ const crawlerPrerender = async function(options = {}) {
 		}
 	}
 
-	return { prerender, middlware };
+	return { prerender, middleware };
 
 }
 
-const prerender = function(path) {
+const prerender = function(path, options={}) {
+
+	const doNotOverwrite = (options.overwrite === false);
 
 	return new Promise(async (resolve, reject) => {
 
@@ -145,6 +183,19 @@ const prerender = function(path) {
 		if (pathLen > 1) {
 			if (path.charAt(pathLen - 1) ===  '/')
 				path = path.substring(0, pathLen - 1);
+		}
+
+		// creating the file path
+		const encodedFileName = encodeURIComponent(path);
+		const filePath = `${settings.basePath}/${encodedFileName}`;
+
+		// if doNotOverwrite check if it exists, if it does return
+		if (doNotOverwrite) {
+			const fileExists = await pathExists(filePath);
+			if (fileExists) {
+				resolve();
+				return;
+			}
 		}
 
 		try {
@@ -210,16 +261,16 @@ const prerender = function(path) {
 			// create a DOM that will execute the scripts that will create contents
 			html = dormantDOM.serialize();
 
+			const virtualConsole = new VirtualConsole();
 			const options = { 
 				runScripts: "dangerously",
-				url // very important
+				url, // very important
+				virtualConsole
 			};
 
 			const DOM = new JSDOM(html, options);
 			document = DOM.window.document;
 
-			const encodedFileName = encodeURIComponent(path);
-			const filePath = `${settings.basePath}/${encodedFileName}`;
 
 			let timer;
 
@@ -266,13 +317,16 @@ const prerender = function(path) {
 					document.dispatchEvent(event);
 				} else {
 					document.removeEventListener(PAGE_COMPLETELY_RENDERED_EVENT_NAME, pageCompletelyRendered);
-					reject(new Error('Render timeout'));
+
+					const err = new Error('Render timeout');
+					reject(err);
 				}
 
 			}, DEFAULT_RENDERING_TIMEOUT);
 
+			// telling the document that JSDOM is now ready to receive the PAGE_COMPLETELY_RENDERED event
 	      const event = new Event(JSDOM_DOCUMENT_READY_EVENT_NAME);
-	      document.dispatchEvent(event)
+	      document.dispatchEvent(event);
 
 		} catch(err) {
 			reject(err);

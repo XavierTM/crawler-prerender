@@ -10,13 +10,14 @@ This module make easier to manage SEO for SPAs(single page applications). It sol
 In general, the package crawls your web pages, get the Javascript to generate content, runs it, then saves the HTML content to show search engine crawlers. When a search engine crawls your website, it the serves it the prerendered HTML. Normal clients will still receives normal SPA content.
 
 ### Backend
-The npm package has two components
+The npm package has three components
 
 #### Prerendering function
 This function generates HTML from your page Javascript and saves it to the file system. All you need to do is pass a path to the resource, and it will generate the HTML.
 
 #### Middleware
 This middleware will detect traffic from search engine crawlers and it serves them prerendered HTML rather than SPA javascript page. If the path is not yet prerendered, it will return HTTP 503 error code, then prerenders the path.
+
 
 ### Front end
 The front end script consists of two functions.
@@ -64,6 +65,7 @@ $ npm install crawler-prerender
 })();
 ```
 ### Prerendering a path
+By default, it will overwrite the prerendered contents of the path
 ```javascript
 
 const crawlerPrerender = require('crawler-prerender');
@@ -81,6 +83,13 @@ crawlerPrerender.prerender('/some-path');
 ```
 
 **NB**: You can only access prerender after passing options
+
+#### Prerender only if not prerendered
+You can prevent the ```prerender``` function from overwriting the path's prerendered contents. This is useful when you want to make sure that all the paths are prerendered every time you startup the application, but you do not want to waste resources when the paths are already prerendered.
+
+```javascript
+prerender(path, { overwrite: false });
+``` 
 
 ### Options
 
@@ -111,11 +120,29 @@ crawlerPrerender.prerender('/some-path');
 		 	<b>Default</b>: <code>false</code>
 		</td>
 	</tr>
+	<tr>
+		<td><b>prerenderOnError</b></td>
+		<td>
+			A function to be called when an error occurs while prerendering.<br>
+			<code>function(path, errors) {
+				<br>
+				&nbsp; &nbsp;// code
+				<br>}</code><br>
+			<b>path</b> — the path that was being prerendered.<br>
+			<b>errors</b> — an array of all the errors that occured during retries
+			<br>
+			<b>NB</b>: This function will only be called when <code>prerender</code> is called because a crawler tried to crawl a path that was not prerendered.
+		 	<br><br>
+		 	<b>Default</b>: The default function will just print the errors on the console. It's not wise to use this in production, since you won't be always looking at your console.
+		</td>
+	</tr>
 </table>
 
 ## Front End Setup
 
-[https://cdn.jsdelivr.net/gh/xaviertm/crawler-prerender@0.1.9/crawler-prerender.min.js](https://cdn.jsdelivr.net/gh/xaviertm/crawler-prerender@0.1.9/crawler-prerender.min.js)
+```html
+<script defer src="https://cdn.jsdelivr.net/gh/xaviertm/crawler-prerender@0.1.9/crawler-prerender.min.js"></script>
+```
 
 Include the above script in your application
 

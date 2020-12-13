@@ -101,8 +101,6 @@ function checkIfBot(req) {
 
 
 async function saveRenderedHTML(DOM, filePath) {
-
-	console.log('saveRenderedHTML', { filePath})
 	const html = DOM.serialize();
 	await fs.writeFile(filePath, html, 'utf8');
 }
