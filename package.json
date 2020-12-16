@@ -1,6 +1,6 @@
 {
   "name": "crawler-prerender",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Prerendering for Single Page Applications to improve SEO",
   "main": "index.js",
   "scripts": {

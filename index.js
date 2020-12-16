@@ -140,7 +140,7 @@ const crawlerPrerender = async function(options = {}) {
 				for (let i = 0; i < PRERENDER_MAXIMUM_RETRIES; i++) {
 					try {
 						await prerender(req.originalUrl, true);
-						prerender = true;
+						prerendered = true;
 						break;
 					} catch (err) {
 						errors.push(err);
